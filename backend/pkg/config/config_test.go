@@ -22,6 +22,11 @@ func TestConfig_GetSecretPatterns_SkipsBlankAndTrimsPaddedValues(t *testing.T) {
 	}{
 		{name: "an empty config", cfg: &Config{}},
 		{
+			name: "bootstrap credential is redacted",
+			cfg:  &Config{BootstrapAdminPassword: "bootstrap.secret+value"},
+			want: []string{`(?P<replace>bootstrap\.secret\+value)`},
+		},
+		{
 			name: "blank values are skipped",
 			cfg:  &Config{OpenAIKey: "sk-1234", AnthropicAPIKey: "", GeminiAPIKey: "   ", DatabaseURL: "\t\n", LicenseKey: "ABCD-EFGH"},
 			want: []string{"(?P<replace>ABCD-EFGH)", "(?P<replace>sk-1234)"},

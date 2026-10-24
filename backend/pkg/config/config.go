@@ -502,6 +502,7 @@ func (c *Config) GetSecretPatterns() []patterns.Pattern {
 		{c.DatabaseURL, "Database URL"},
 		{c.LicenseKey, "License Key"},
 		{c.CookieSigningSalt, "Cookie Salt"},
+		{c.BootstrapAdminPassword, "Bootstrap Admin Password"},
 		{c.OpenAIKey, "OpenAI Key"},
 		{c.AnthropicAPIKey, "Anthropic Key"},
 		{c.AnthropicIdentityToken, "Anthropic Identity Token"},
