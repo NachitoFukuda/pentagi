@@ -14,7 +14,7 @@ const readme = readFileSync('README.md', 'utf8');
 export default defineConfig(({ mode }) => {
     const viteEnv = loadEnv(mode, process.cwd(), '');
     const vitePort = viteEnv.VITE_PORT ? Number.parseInt(viteEnv.VITE_PORT, 10) : 8000;
-    const viteHost = viteEnv.VITE_HOST || '0.0.0.0';
+    const viteHost = viteEnv.VITE_HOST || '127.0.0.1';
     const useHttps = viteEnv.VITE_USE_HTTPS === 'true';
 
     const sslKeyPath = viteEnv.VITE_SSL_KEY_PATH || 'ssl/server.key';

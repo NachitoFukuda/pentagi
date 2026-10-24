@@ -1,0 +1,77 @@
+name: pentagi-codex
+services:
+  postgres:
+    image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    environment:
+      POSTGRES_USER: pentagi
+      POSTGRES_DB: pentagi
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?run setup.py first}
+    network_mode: host
+    command: ["postgres", "-p", "15432", "-c", "listen_addresses=127.0.0.1"]
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 15432 -U pentagi -d pentagi"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+  pentagi:
+    image: pentagi-codex:local
+    # This is the dedicated VM's network, NOT the Mac network. All listeners
+    # bind to VM loopback; an SSH reverse tunnel reaches the Mac's CLI bridge.
+    network_mode: host
+    group_add: ["${DOCKER_SOCKET_GID:?run setup.py first}"]
+    environment:
+      DATA_DIR: /opt/pentagi/data
+      STATIC_DIR: /opt/pentagi/fe
+      SERVER_HOST: 127.0.0.1
+      SERVER_PORT: "18443"
+      SERVER_USE_SSL: "false"
+      PUBLIC_URL: http://127.0.0.1:18443
+      CORS_ORIGINS: http://127.0.0.1:18443
+      DATABASE_URL: postgres://pentagi:${DATABASE_PASSWORD}@127.0.0.1:15432/pentagi?sslmode=disable
+      COOKIE_SIGNING_SALT: ${COOKIE_SIGNING_SALT}
+      BOOTSTRAP_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      EXTERNAL_REPORTING_ENABLED: "false"
+      UPDATE_CHECK_INTERVAL: "0"
+      LANGFUSE_BASE_URL: ""
+      OTEL_HOST: ""
+      EMBEDDING_PROVIDER: none
+      DUCKDUCKGO_ENABLED: "false"
+      SPLOITUS_ENABLED: "false"
+      WEB_SEARCH_INTERNAL_ENABLED: "false"
+      GRAPHITI_ENABLED: "false"
+      ASK_USER: "true"
+      LLM_SERVER_URL: http://127.0.0.1:18765/v1
+      LLM_SERVER_KEY: ${BRIDGE_TOKEN}
+      LLM_SERVER_MODEL: codex-local
+      LLM_SERVER_PROVIDER: ""
+      DOCKER_INSIDE: "false"
+      DOCKER_NET_ADMIN: "false"
+      DOCKER_NETWORK: pentagi-workers
+      DOCKER_DEFAULT_IMAGE: debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
+      DOCKER_DEFAULT_IMAGE_FOR_PENTEST: debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
+      DOCKER_IMAGE_SELECTION_MODE: fixed
+      DOCKER_ALLOWED_IMAGES: debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
+      DOCKER_PUBLIC_IP: 127.0.0.1
+      HTTP_CLIENT_TIMEOUT: "600"
+      TERMINAL_TOOL_TIMEOUT: "60"
+      EXECUTION_MONITOR_ENABLED: "true"
+      EXECUTION_MONITOR_TOTAL_TOOL_LIMIT: "20"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - application:/opt/pentagi/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,mode=1777"]
+    pids_limit: 128
+    mem_limit: 1024m
+volumes:
+  application:
+  database:

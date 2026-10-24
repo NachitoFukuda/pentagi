@@ -40,7 +40,7 @@ func (fakeTraceCollector) Export(context.Context, *coltracev1.ExportTraceService
 }
 
 func TestNewTelemetryClient_EmptyEndpointReturnsErrNotConfigured(t *testing.T) {
-	_, err := NewTelemetryClient(context.Background(), &config.Config{TelemetryEndpoint: ""})
+	_, err := NewTelemetryClient(context.Background(), &config.Config{ExternalReportingEnabled: true, TelemetryEndpoint: ""})
 	if !errors.Is(err, ErrNotConfigured) {
 		t.Fatalf("want ErrNotConfigured, got %v", err)
 	}
@@ -58,7 +58,7 @@ func TestNewTelemetryClient_SuccessPathExportsAndShutsDown(t *testing.T) {
 	go func() { _ = srv.Serve(ln) }()
 	defer srv.Stop()
 
-	client, err := NewTelemetryClient(context.Background(), &config.Config{TelemetryEndpoint: ln.Addr().String()})
+	client, err := NewTelemetryClient(context.Background(), &config.Config{ExternalReportingEnabled: true, TelemetryEndpoint: ln.Addr().String()})
 	if err != nil {
 		t.Fatalf("NewTelemetryClient: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestNewTelemetryClient_UnreachableDoesNotBlockStartup(t *testing.T) {
 		client TelemetryClient
 		err    error
 	}
-	cfg := &config.Config{TelemetryEndpoint: "127.0.0.1:1"} // nothing listening
+	cfg := &config.Config{ExternalReportingEnabled: true, TelemetryEndpoint: "127.0.0.1:1"} // nothing listening
 	done := make(chan result, 1)
 	go func() {
 		c, e := NewTelemetryClient(context.Background(), cfg)

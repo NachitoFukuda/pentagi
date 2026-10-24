@@ -60,6 +60,9 @@ func (c *langfuseClient) ForceFlush(ctx context.Context) error {
 }
 
 func NewLangfuseClient(ctx context.Context, cfg *config.Config) (LangfuseClient, error) {
+	if !cfg.ExternalReportingEnabled {
+		return nil, fmt.Errorf("external reporting is disabled: %w", ErrNotConfigured)
+	}
 	if cfg.LangfuseBaseURL == "" {
 		return nil, fmt.Errorf("langfuse base url is not set: %w", ErrNotConfigured)
 	}

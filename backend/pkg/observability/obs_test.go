@@ -175,7 +175,7 @@ func newRecordingOtel(t *testing.T) (*telemetryClient, *recordingTraceCollector)
 	go func() { _ = srv.Serve(ln) }()
 	t.Cleanup(srv.Stop)
 
-	tc, err := NewTelemetryClient(context.Background(), &config.Config{TelemetryEndpoint: ln.Addr().String()})
+	tc, err := NewTelemetryClient(context.Background(), &config.Config{ExternalReportingEnabled: true, TelemetryEndpoint: ln.Addr().String()})
 	if err != nil {
 		t.Fatalf("NewTelemetryClient: %v", err)
 	}

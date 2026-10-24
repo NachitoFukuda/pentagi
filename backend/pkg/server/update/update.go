@@ -143,6 +143,9 @@ type Service struct {
 // cannot say which installation it describes says nothing, and inventing an
 // identity would create an installation that never existed.
 func New(cfg *config.Config, queries *database.Queries) (*Service, error) {
+	if cfg == nil || !cfg.ExternalReportingEnabled || cfg.UpdateCheckInterval <= 0 {
+		return nil, fmt.Errorf("update reporting is disabled")
+	}
 	if cfg == nil || queries == nil {
 		return nil, fmt.Errorf("update: configuration and database are both required")
 	}
@@ -181,7 +184,7 @@ func (r *Service) Status() Status {
 // something that talks to a service it does not depend on.
 func (r *Service) Run(ctx context.Context) {
 	interval := r.cfg.UpdateCheckInterval
-	if interval <= 0 {
+	if !r.cfg.ExternalReportingEnabled || interval <= 0 {
 		r.logger.Debug("disabled by configuration")
 		r.mu.Lock()
 		r.status.State = StateDisabled
