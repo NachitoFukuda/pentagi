@@ -65,3 +65,9 @@ go test -tags codexonly ./pkg/providers/custom ./cmd/pentagi
 ```
 
 今回の検証記録は [VALIDATION.md](VALIDATION.md) を参照してください。
+
+### 日本語の画面
+
+このフォークではGUIを日本語でビルドします。メニュー、設定、診断作成、検索、確認ダイアログ、エラー表示に静的な日本語辞書を適用し、日時とカレンダーも日本語で表示します。翻訳サービスへの送信やブラウザーのDOM書き換えは行いません。ユーザーの文書、プロンプト本文、モデルの応答、コマンド、ターミナル出力、APIの識別子は翻訳対象にしません。モデルには日本語で指示できます。
+
+辞書は `frontend/src/locales/ja.json`、ビルド時の適用処理は `frontend/scripts/japanese-ui.ts` です。従来の英語UIは `VITE_UI_LANGUAGE=en` を指定してビルドできます。変更後はフロントエンドをビルドし、`integrations/codex/start.sh` で専用VMのアプリに反映してください。

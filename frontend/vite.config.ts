@@ -7,6 +7,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 import { generateCertificates } from './scripts/generate-ssl.ts';
 import { getGitHash } from './scripts/lib.ts';
+import { japaneseUi } from './scripts/japanese-ui.ts';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const readme = readFileSync('README.md', 'utf8');
@@ -123,6 +124,7 @@ export default defineConfig(({ mode }) => {
         },
         plugins: [
             tsconfigPaths(),
+            japaneseUi(viteEnv.VITE_UI_LANGUAGE !== 'en'),
             react(),
             createHtmlPlugin({
                 inject: {

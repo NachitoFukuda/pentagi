@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatDistance } from 'date-fns';
+import { enUS, ja } from 'date-fns/locale';
 import { ChevronsUpDown, CircleArrowDown, CircleCheck, CircleQuestionMark, ExternalLink } from 'lucide-react';
 
 import type { VersionInfoFragmentFragment } from '@/graphql/types';
@@ -65,13 +66,22 @@ export function describeTiming(info: VersionInfoFragmentFragment, now: Date = ne
     const facts: VersionFact[] = [];
 
     if (info.checkedAt) {
-        facts.push({ label: 'Checked', value: formatDistance(new Date(info.checkedAt), now, { addSuffix: true }) });
+        facts.push({
+            label: 'Checked',
+            value: formatDistance(new Date(info.checkedAt), now, {
+                addSuffix: true,
+                locale: import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja,
+            }),
+        });
     }
 
     if (info.failedAt) {
         facts.push({
             label: 'Last check failed',
-            value: formatDistance(new Date(info.failedAt), now, { addSuffix: true }),
+            value: formatDistance(new Date(info.failedAt), now, {
+                addSuffix: true,
+                locale: import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja,
+            }),
         });
     }
 

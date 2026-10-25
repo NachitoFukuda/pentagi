@@ -1,3 +1,4 @@
+import { enUS, ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker, type DayPickerProps } from 'react-day-picker';
 
@@ -48,6 +49,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
                 Chevron: ({ orientation }) =>
                     orientation === 'left' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />,
             }}
+            locale={import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja}
             showOutsideDays={showOutsideDays}
             {...props}
         />
