@@ -380,6 +380,12 @@ func NewRouter(
 // /assets/* — so the module loader fails cleanly and the app can reload to recover
 // instead of getting index.html and a MIME error. Split out to be unit-testable.
 func registerStaticFileServer(router *gin.Engine, staticDir string) {
+	// Defense in depth for the locally served GUI. Markdown itself never mounts
+	// images; trusted same-origin screenshots/icons and in-memory images still work.
+	router.Use(func(c *gin.Context) {
+		c.Header("Content-Security-Policy", "img-src 'self' data: blob:")
+		c.Next()
+	})
 	router.Use(staticCacheMiddleware())
 	router.Use(static.Serve("/", static.LocalFile(staticDir, true)))
 
