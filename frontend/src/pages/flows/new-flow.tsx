@@ -5,6 +5,7 @@ import { AppHeader, AppHeaderContent, AppHeaderTitle } from '@/components/layout
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FlowForm, type FlowFormValues } from '@/features/flows/flow-form';
+import { CodexEngineNotice } from '@/features/providers/codex-engine-notice';
 import { routes } from '@/lib/routes';
 import { useFlows } from '@/providers/flows-provider';
 import { useProviders } from '@/providers/providers-provider';
@@ -60,6 +61,7 @@ function NewFlow() {
                             <h2 className="text-2xl font-semibold">Create a new flow</h2>
                             <p className="text-muted-foreground">Describe what you would like PentAGI to test</p>
                         </div>
+                        {selectedProvider?.backend === 'codex-cli' && <CodexEngineNotice />}
                         <Tabs
                             onValueChange={(value) => setFlowType(value as 'assistant' | 'automation')}
                             value={flowType}

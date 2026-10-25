@@ -17,7 +17,7 @@ for attempt in range(10):
 # Send HTTP through stdin, never a token-bearing argv or logged command.
 script = '''import sys,json,urllib.request
 value=sys.stdin.readline().strip()
-r=urllib.request.Request('http://127.0.0.1:18765/health',headers={'Authorization':'Bearer '+value})
+r=urllib.request.Request('http://127.0.0.1:18766/health',headers={'Authorization':'Bearer '+value})
 with urllib.request.urlopen(r,timeout=5) as reply: assert json.load(reply)['status']=='ok'
 print('VM tunnel authenticated')
 '''

@@ -14,21 +14,16 @@ if ! docker --context "$CONTEXT" network inspect pentagi-workers >/dev/null 2>&1
 fi
 colima -p pentagi-secure ssh -- sh -s < integrations/codex/isolate.sh
 python3 integrations/codex/setup.py
-# Process ownership lives in private pid files, not a machine-wide service.
-if [ -f "$STATE/bridge.pid" ] && kill -0 "$(cat "$STATE/bridge.pid")" 2>/dev/null; then
-  echo "Bridge is already running"
-else
-  nohup python3 -u integrations/codex/bridge.py --token-file "$STATE/bridge.token" --model "$MODEL" > "$STATE/bridge.log" 2>&1 < /dev/null &
-  echo $! > "$STATE/bridge.pid"
-fi
-if [ -f "$STATE/tunnel.pid" ] && kill -0 "$(cat "$STATE/tunnel.pid")" 2>/dev/null; then
-  echo "Tunnel is already running"
-else
-  nohup ssh -F "$HOME/.colima/_lima/colima-pentagi-secure/ssh.config" -o ControlMaster=no -o ControlPath=none -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -N -R 127.0.0.1:18765:127.0.0.1:18765 lima-colima-pentagi-secure > "$STATE/tunnel.log" 2>&1 < /dev/null &
-  echo $! > "$STATE/tunnel.pid"
-fi
+# User-owned launchd jobs outlive the terminal/chat process. Plists remain in
+# private .state, without automatic startup on the next login or machine boot.
+python3 integrations/codex/services.py start --model "$MODEL"
 # Check authenticated bridge over the tunnel before starting the app.
-python3 integrations/codex/check_tunnel.py
+attempt=0
+until python3 integrations/codex/check_tunnel.py; do
+  attempt=$((attempt + 1))
+  [ "$attempt" -lt 10 ] || exit 1
+  sleep 1
+done
 # Never runs docker compose against the user's current/default context.
 DOCKER_CONTEXT="$CONTEXT" docker-compose --env-file "$STATE/secure.env" -f integrations/codex/compose.yml up -d
 printf '%s\n' 'PentAGI: http://127.0.0.1:18443' 'Credentials: .state/login.txt'

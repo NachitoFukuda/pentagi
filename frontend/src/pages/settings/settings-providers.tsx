@@ -26,10 +26,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Spinner } from '@/components/ui/spinner';
+import { CodexEngineNotice } from '@/features/providers/codex-engine-notice';
 import { DeleteProviderDocument, ProviderType, SettingsProvidersDocument } from '@/graphql/types';
 import { useTableState } from '@/hooks/use-table-state';
 import { routes } from '@/lib/routes';
 import { formatTableDate } from '@/lib/utils/format';
+import { hasCodexCliBackend } from '@/models/provider';
 type Provider = ProviderConfigFragmentFragment;
 
 // Exhaustive Record so a newly-added ProviderType is a compile error here, not a
@@ -443,20 +445,26 @@ function SettingsProviders() {
     }
 
     const providers = data?.settingsProviders?.userDefined || [];
+    const engineNotice = hasCodexCliBackend(data?.settingsProviders) ? <CodexEngineNotice /> : null;
 
     if (providers.length === 0) {
         return (
             <>
                 {pageHeader}
                 <div className="flex flex-1 flex-col gap-4 p-4">
+                    {engineNotice}
                     <Empty>
                         <EmptyHeader>
                             <EmptyMedia variant="icon">
                                 <Settings />
                             </EmptyMedia>
-                            <EmptyTitle>No providers configured</EmptyTitle>
+                            <EmptyTitle>
+                                {engineNotice ? 'No additional provider configurations' : 'No providers configured'}
+                            </EmptyTitle>
                             <EmptyDescription>
-                                Get started by adding your first language model provider
+                                {engineNotice
+                                    ? 'Codex CLI is configured and ready to select in a new flow. Additional provider configurations are optional.'
+                                    : 'Get started by adding your first language model provider'}
                             </EmptyDescription>
                         </EmptyHeader>
                         <EmptyContent>
@@ -478,6 +486,7 @@ function SettingsProviders() {
         <>
             {pageHeader}
             <div className="flex flex-1 flex-col gap-4 p-4">
+                {engineNotice}
                 <DataTable<Provider>
                     columns={columns}
                     data={providers}

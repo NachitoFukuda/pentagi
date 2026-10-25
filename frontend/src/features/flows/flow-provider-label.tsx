@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import { ProviderIcon } from '@/components/icons/provider-icon';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { isProviderMissing, type Provider } from '@/models/provider';
+import { getProviderDisplayName, isProviderMissing, type Provider } from '@/models/provider';
 
 interface FlowProviderLabelProps {
     isOwnFlow: boolean;
@@ -13,6 +13,8 @@ interface FlowProviderLabelProps {
 
 export function FlowProviderLabel({ isOwnFlow, provider, providers }: FlowProviderLabelProps) {
     const isMissing = isOwnFlow && isProviderMissing(provider, providers);
+    const displayProvider = providers.find((p) => p.name === provider.name && p.type === provider.type) ?? provider;
+    const displayName = getProviderDisplayName(displayProvider);
 
     return (
         <div
@@ -25,9 +27,9 @@ export function FlowProviderLabel({ isOwnFlow, provider, providers }: FlowProvid
             />
             <span
                 className="truncate text-sm"
-                title={provider?.name}
+                title={displayName}
             >
-                {provider?.name || 'N/A'}
+                {displayName || 'N/A'}
             </span>
             {isMissing && (
                 <Tooltip>

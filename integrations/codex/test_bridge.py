@@ -4,6 +4,8 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
+import subprocess
 import urllib.error
 import urllib.request
 
@@ -80,7 +82,35 @@ class BridgeTests(unittest.TestCase):
         self.assertIn('read-only', command)
         self.assertIn('shell_tool', command)
         self.assertIn('web_search="disabled"', command)
+        self.assertIn('forced_login_method="chatgpt"', command)
         self.assertNotIn('--dangerously-bypass-approvals-and-sandbox', command)
+
+    def test_api_key_login_is_rejected_before_inference(self):
+        runner = b.CodexRunner('/usr/local/bin/codex', 'test-model')
+        body = {'model': b.MODEL_ALIAS, 'messages': [{'role': 'user', 'content': 'hello'}]}
+        for status in ['Logged in using an API key', 'Not logged in']:
+            with patch.object(b.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, status, '')), \
+                    patch.object(b.subprocess, 'Popen') as spawn:
+                with self.assertRaisesRegex(b.BridgeError, 'ChatGPT'):
+                    runner(body)
+                spawn.assert_not_called()
+
+    def test_cli_auth_check_uses_cli_without_copying_credentials(self):
+        runner = b.CodexRunner('/usr/local/bin/codex', 'test-model')
+        with patch.object(b.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '', 'Logged in using ChatGPT')) as call:
+            runner.require_chatgpt_login()
+            self.assertEqual(call.call_args.args[0], ['/usr/local/bin/codex', 'login', 'status'])
+
+    def test_api_credentials_and_wif_are_not_inherited(self):
+        with patch.dict(b.os.environ, {'OPENAI_API_KEY': 'private', 'CODEX_API_KEY': 'private',
+                'ACCESS_TOKEN': 'private', 'CODEX_ACCESS_TOKEN': 'private',
+                'OPENAI_IDENTITY_TOKEN_FILE': '/private/token'}):
+            env = b.CodexRunner.environment()
+            self.assertNotIn('OPENAI_API_KEY', env)
+            self.assertNotIn('CODEX_API_KEY', env)
+            self.assertNotIn('ACCESS_TOKEN', env)
+            self.assertNotIn('CODEX_ACCESS_TOKEN', env)
+            self.assertNotIn('OPENAI_IDENTITY_TOKEN_FILE', env)
 
     def test_bind_cannot_be_public(self):
         with self.assertRaises(ValueError): b.BridgeServer(('0.0.0.0', 0), 'x'*48, None)

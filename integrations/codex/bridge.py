@@ -100,6 +100,23 @@ class CodexRunner:
     def __init__(self, executable, model, timeout=600):
         self.executable, self.model, self.timeout = executable, model, timeout
 
+    @staticmethod
+    def environment():
+        allowed = ('HOME', 'PATH', 'TMPDIR', 'LANG', 'LC_ALL', 'CODEX_HOME',
+                   'USER', 'LOGNAME', 'SSL_CERT_FILE', 'SSL_CERT_DIR')
+        return {k: os.environ[k] for k in allowed if k in os.environ}
+
+    def require_chatgpt_login(self):
+        # Ask the CLI itself; never inspect, copy or expose its credential store.
+        try:
+            result = subprocess.run([self.executable, 'login', 'status'],
+                                    env=self.environment(), capture_output=True,
+                                    timeout=15, text=True)
+        except (OSError, subprocess.TimeoutExpired):
+            raise BridgeError('Cannot verify Codex CLI ChatGPT login') from None
+        if result.returncode or 'Logged in using ChatGPT' not in result.stdout + result.stderr:
+            raise BridgeError('Codex CLI must be logged in using ChatGPT; API-key login is not accepted')
+
     def command(self, directory, schema, output):
         command = [self.executable, 'exec', '--ignore-user-config', '--ignore-rules',
                    '--ephemeral', '--skip-git-repo-check', '--sandbox', 'read-only',
@@ -112,7 +129,8 @@ class CodexRunner:
         for setting in ('web_search="disabled"', 'project_doc_max_bytes=0',
                         'plugins._default.enabled=false', 'analytics.enabled=false',
                         'history.persistence="none"', 'otel.exporter="none"',
-                        'otel.metrics_exporter="none"', 'model_reasoning_effort="low"'):
+                        'otel.metrics_exporter="none"', 'model_reasoning_effort="low"',
+                        'forced_login_method="chatgpt"'):
             command += ['-c', setting]
         if self.model:
             command += ['--model', self.model]
@@ -120,6 +138,7 @@ class CodexRunner:
 
     def __call__(self, body):
         validate_request(body)
+        self.require_chatgpt_login()
         # Fresh empty working directory: no target-controlled AGENTS.md or project config.
         with tempfile.TemporaryDirectory(prefix='pentagi-codex-') as raw:
             directory = Path(raw)
@@ -135,9 +154,7 @@ class CodexRunner:
                       'For response_format=json_object, content must itself be valid JSON.\n'
                       + json.dumps(body, ensure_ascii=False))
             # No API keys, cloud keys, proxy settings, or application secrets inherited.
-            allowed = ('HOME', 'PATH', 'TMPDIR', 'LANG', 'LC_ALL', 'CODEX_HOME',
-                       'USER', 'LOGNAME', 'SSL_CERT_FILE', 'SSL_CERT_DIR')
-            env = {k: os.environ[k] for k in allowed if k in os.environ}
+            env = self.environment()
             command = self.command(directory, schema, output)
             with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
                 process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stdout,
@@ -216,7 +233,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path == '/health':
             self.send_json(200, {'status': 'ok', 'calls': self.server.calls,
-                                 'failures': self.server.failures})
+                                 'failures': self.server.failures,
+                                 'engine': 'codex-cli',
+                                 'authentication': 'chatgpt',
+                                 'model': getattr(self.server.runner, 'model', MODEL_ALIAS)})
         elif self.path == '/v1/models':
             self.send_json(200, {'object': 'list', 'data': [
                 {'id': MODEL_ALIAS, 'object': 'model', 'owned_by': 'local-codex'}]})
@@ -289,7 +309,12 @@ def main():
     token = args.token_file.read_text().strip()
     if len(token) < 32:
         parser.error('token must contain at least 32 characters')
-    server = BridgeServer(('127.0.0.1', args.port), token, CodexRunner(args.codex, args.model))
+    runner = CodexRunner(args.codex, args.model)
+    try:
+        runner.require_chatgpt_login()
+    except BridgeError as error:
+        parser.error(str(error))
+    server = BridgeServer(('127.0.0.1', args.port), token, runner)
     print('Codex bridge listening on loopback port ' + str(args.port), flush=True)
     try:
         server.serve_forever()
