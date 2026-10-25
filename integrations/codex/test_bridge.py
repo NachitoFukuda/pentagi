@@ -63,6 +63,7 @@ class BridgeTests(unittest.TestCase):
         answer = {'content': '', 'tool_calls': [{'name': 'terminal', 'arguments': '{"command":"printf TEST"}'}]}
         message = b.validate_answer(answer, body)
         self.assertEqual(json.loads(message['tool_calls'][0]['function']['arguments'])['command'], 'printf TEST')
+        self.assertRegex(message['tool_calls'][0]['id'], r'^call_[0-9a-f]{24}$')
         for changed in [dict(answer, tool_calls=[{'name': 'unoffered', 'arguments': '{}'}]),
                         dict(answer, tool_calls=[{'name': 'terminal', 'arguments': 'invalid'}])]:
             with self.assertRaises(b.BridgeError): b.validate_answer(changed, body)

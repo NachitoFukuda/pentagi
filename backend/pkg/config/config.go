@@ -136,6 +136,7 @@ type Config struct {
 	SummarizerKeepQASections int  `env:"SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"1"`
 
 	// === LLM Provider: Custom/Self-Hosted ===
+	CodexCLIEnabled            bool   `env:"CODEX_CLI_ENABLED" envDefault:"false"`
 	LLMServerURL               string `env:"LLM_SERVER_URL"`
 	LLMServerKey               string `env:"LLM_SERVER_KEY"`
 	LLMServerModel             string `env:"LLM_SERVER_MODEL"`

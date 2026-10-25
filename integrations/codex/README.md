@@ -77,3 +77,5 @@ go test -tags codexonly ./pkg/providers/custom ./cmd/pentagi
 ### 推論エンジンの表示
 
 設定とモデル一覧が `codex-local` を示す場合、新しい診断のプロバイダー名は「Codex CLI」と表示し、設定画面にもChatGPTログインを使う接続の説明を表示します。内部のプロバイダーIDは既存データと互換性のある `custom` のままです。ローカルHTTPはPentAGIとCLIの受け渡し用であり、実際の推論ごとに公式 `codex exec` を起動します。プロバイダー設定の追加やOpenAI APIキーの登録は不要です。
+
+`CODEX_CLI_ENABLED=true` を専用Composeで指定し、接続先をループバックのCLI中継、モデルを `codex-local` に限定します。このモードは中継が生成するツール呼び出しIDの形式を既知として扱い、一般API向けの形式判定用推論（並列の初期確認）を省きます。

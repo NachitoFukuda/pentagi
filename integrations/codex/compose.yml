@@ -44,6 +44,7 @@ services:
       WEB_SEARCH_INTERNAL_ENABLED: "false"
       GRAPHITI_ENABLED: "false"
       ASK_USER: "true"
+      CODEX_CLI_ENABLED: "true"
       LLM_SERVER_URL: http://127.0.0.1:18766/v1
       LLM_SERVER_KEY: ${BRIDGE_TOKEN}
       LLM_SERVER_MODEL: codex-local
