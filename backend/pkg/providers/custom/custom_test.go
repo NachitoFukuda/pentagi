@@ -17,6 +17,7 @@ import (
 	"pentagi/pkg/config"
 	"pentagi/pkg/providers/pconfig"
 	"pentagi/pkg/providers/provider"
+	"pentagi/pkg/templates"
 
 	"github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
@@ -535,4 +536,36 @@ func TestCustom_EveryCallPathPutsTheAgentsAdaptiveEffortOnTheWire(t *testing.T) 
 			assert.Equal(t, "xhigh", effort, "body=%v", server.body)
 		})
 	}
+}
+
+func TestCustom_CodexModeUsesTheKnownAdapterIDWithoutInference(t *testing.T) {
+	requests := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		assert.Equal(t, "/v1/models", r.URL.Path)
+		assert.Equal(t, http.MethodGet, r.Method)
+		fmt.Fprint(w, `{"object":"list","data":[{"id":"codex-local","object":"model"}]}`)
+	}))
+	defer srv.Close()
+	cfg := &config.Config{CodexCLIEnabled: true, LLMServerKey: "k", LLMServerURL: srv.URL + "/v1", LLMServerModel: "codex-local"}
+	pc, err := BuildProviderConfig(cfg, []byte(`{}`))
+	require.NoError(t, err)
+	prv, err := New(cfg, provider.DefaultProviderNameCustom, pc, nil)
+	require.NoError(t, err)
+	pattern, err := prv.GetToolCallIDTemplate(context.Background(), nil)
+	require.NoError(t, err)
+	assert.Equal(t, "call_{r:24:h}", pattern)
+	require.NoError(t, templates.ValidatePattern(pattern, []templates.PatternSample{{Value: "call_0123456789abcdef01234567"}}))
+	assert.Equal(t, 1, requests, "Only the model catalogue may be fetched; no inference probes")
+}
+
+func TestCustom_CodexModeRejectsExternalOrIncompatibleEndpoints(t *testing.T) {
+	for _, address := range []string{"https://api.openai.com/v1", "http://example.com/v1", "http://127.0.0.1:18766/other", "http://u:p@127.0.0.1:18766/v1", "http://127.0.0.1:18766/v1?key=x"} {
+		cfg := &config.Config{CodexCLIEnabled: true, LLMServerKey: "k", LLMServerURL: address, LLMServerModel: "codex-local"}
+		_, err := New(cfg, provider.DefaultProviderNameCustom, nil, nil)
+		require.ErrorContains(t, err, "Codex CLI mode requires")
+	}
+	cfg := &config.Config{CodexCLIEnabled: true, LLMServerKey: "k", LLMServerURL: "http://127.0.0.1:18766/v1", LLMServerModel: "other"}
+	_, err := New(cfg, provider.DefaultProviderNameCustom, nil, nil)
+	require.ErrorContains(t, err, "Codex CLI mode requires")
 }

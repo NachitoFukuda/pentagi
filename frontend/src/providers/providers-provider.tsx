@@ -8,8 +8,9 @@ import {
     ProviderDeletedDocument,
     ProvidersDocument,
     ProviderUpdatedDocument,
+    SettingsProvidersDocument,
 } from '@/graphql/types';
-import { findProviderByName, sortProviders } from '@/models/provider';
+import { findProviderByName, hasCodexCliBackend, sortProviders } from '@/models/provider';
 import { useUser } from '@/providers/user-provider';
 
 const SELECTED_PROVIDER_KEY = 'selectedProvider';
@@ -33,6 +34,7 @@ export function ProvidersProvider({ children }: ProvidersProviderProps) {
     const { data: providersData, refetch: refetchProviders } = useQuery(ProvidersDocument, {
         skip: !isAuthenticated(),
     });
+    const { data: providerSettings } = useQuery(SettingsProvidersDocument, { skip: !isAuthenticated() });
 
     // The providers list is a separate root field from the settings page's own
     // query, so editing a provider there leaves this copy stale — and a stale
@@ -53,7 +55,19 @@ export function ProvidersProvider({ children }: ProvidersProviderProps) {
     useSubscription(ProviderUpdatedDocument, { onData: refetchOnProviderEvent, skip: subscriptionSkip });
     useSubscription(ProviderDeletedDocument, { onData: refetchOnProviderEvent, skip: subscriptionSkip });
 
-    const providers = useMemo(() => sortProviders(providersData?.providers || []), [providersData?.providers]);
+    const providers = useMemo(
+        () =>
+            sortProviders(
+                (providersData?.providers || []).map((provider) =>
+                    provider.name === 'custom' &&
+                    provider.type === 'custom' &&
+                    hasCodexCliBackend(providerSettings?.settingsProviders)
+                        ? { ...provider, backend: 'codex-cli' as const }
+                        : provider,
+                ),
+            ),
+        [providersData?.providers, providerSettings?.settingsProviders],
+    );
 
     const [selectedProviderName, setSelectedProviderName] = useState<null | string>(() => {
         return localStorage.getItem(SELECTED_PROVIDER_KEY);

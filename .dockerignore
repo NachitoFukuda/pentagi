@@ -1,4 +1,7 @@
 frontend/coverage
+.git
+.state
+audit
 frontend/dist
 frontend/node_modules
 frontend/e2e/test-results

@@ -22,6 +22,11 @@ func TestConfig_GetSecretPatterns_SkipsBlankAndTrimsPaddedValues(t *testing.T) {
 	}{
 		{name: "an empty config", cfg: &Config{}},
 		{
+			name: "bootstrap credential is redacted",
+			cfg:  &Config{BootstrapAdminPassword: "bootstrap.secret+value"},
+			want: []string{`(?P<replace>bootstrap\.secret\+value)`},
+		},
+		{
 			name: "blank values are skipped",
 			cfg:  &Config{OpenAIKey: "sk-1234", AnthropicAPIKey: "", GeminiAPIKey: "   ", DatabaseURL: "\t\n", LicenseKey: "ABCD-EFGH"},
 			want: []string{"(?P<replace>ABCD-EFGH)", "(?P<replace>sk-1234)"},
@@ -193,7 +198,7 @@ func TestConfig_NewConfig_FillsDefaultsForAnEmptyEnvironment(t *testing.T) {
 	assert.Equal(t, "debian:latest", config.DockerDefaultImage)
 	assert.Equal(t, "vxcontrol/kali-linux", config.DockerDefaultImageForPentest)
 
-	assert.Equal(t, "openai", config.EmbeddingProvider)
+	assert.Equal(t, "none", config.EmbeddingProvider)
 	assert.Equal(t, 512, config.EmbeddingBatchSize)
 	assert.Equal(t, true, config.EmbeddingStripNewLines)
 
@@ -220,7 +225,7 @@ func TestConfig_NewConfig_FillsDefaultsForAnEmptyEnvironment(t *testing.T) {
 	assert.Equal(t, 65536, config.SummarizerMaxQABytes)
 	assert.Equal(t, 1, config.SummarizerKeepQASections)
 
-	assert.Equal(t, true, config.DuckDuckGoEnabled)
+	assert.Equal(t, false, config.DuckDuckGoEnabled)
 	assert.Equal(t, "sonar", config.PerplexityModel, "chat/completions names its models bare, so an unset value defaults to the Sonar model")
 	assert.Equal(t, "low", config.PerplexityContextSize)
 	assert.Equal(t, "general", config.SearxngCategories)

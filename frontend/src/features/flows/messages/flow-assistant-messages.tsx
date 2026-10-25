@@ -108,7 +108,7 @@ function AssistantsDropdown({
             >
                 <FlowStatusIcon
                     status={assistant.status}
-                    tooltip={formatName(assistant.status)}
+                    tooltip={formatName(assistant.status, true)}
                 />
 
                 <ProviderIcon
@@ -167,7 +167,7 @@ function AssistantsDropdown({
                             <>
                                 <FlowStatusIcon
                                     status={selectedAssistant.status}
-                                    tooltip={formatName(selectedAssistant.status)}
+                                    tooltip={formatName(selectedAssistant.status, true)}
                                 />
                                 <ProviderIcon provider={selectedAssistant.provider} />
                                 <span className="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded text-xs font-medium">

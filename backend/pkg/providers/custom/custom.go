@@ -3,6 +3,7 @@ package custom
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -58,6 +59,7 @@ type customProvider struct {
 	providerName   provider.ProviderName
 	providerConfig *pconfig.ProviderConfig
 	providerPrefix string
+	codexCLI       bool
 }
 
 type customAPI struct {
@@ -112,6 +114,14 @@ func New(
 	baseKey := cfg.LLMServerKey
 	baseURL := cfg.LLMServerURL
 	baseModel := cfg.LLMServerModel
+	if cfg.CodexCLIEnabled {
+		endpoint, err := url.Parse(baseURL)
+		if err != nil || endpoint.Scheme != "http" || endpoint.Hostname() != "127.0.0.1" ||
+			endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" ||
+			strings.TrimRight(endpoint.Path, "/") != "/v1" || baseModel != "codex-local" || cfg.LLMServerProvider != "" || cfg.LLMServerAPIType != "" {
+			return nil, fmt.Errorf("Codex CLI mode requires the loopback CLI bridge, model codex-local and no provider prefix")
+		}
+	}
 	if baseKey == "" {
 		return nil, fmt.Errorf("missing API key for provider %q, set it in the LLM_SERVER_KEY environment variable",
 			provider.ProviderCustom)
@@ -167,6 +177,7 @@ func New(
 		providerName:   providerName,
 		providerConfig: providerConfig,
 		providerPrefix: cfg.LLMServerProvider,
+		codexCLI:       cfg.CodexCLIEnabled,
 	}, nil
 }
 
@@ -272,5 +283,11 @@ func (p *customProvider) GetUsage(info map[string]any) pconfig.CallUsage {
 }
 
 func (p *customProvider) GetToolCallIDTemplate(ctx context.Context, prompter templates.Prompter) (string, error) {
+	if p.codexCLI {
+		// bridge.py assigns call_ + secrets.token_hex(12). Discovering this fixed
+		// format through five parallel model calls is wasteful and conflicts with
+		// the deliberately serial CLI runner. No inference is needed to learn it.
+		return "call_{r:24:h}", nil
+	}
 	return provider.DetermineToolCallIDTemplate(ctx, p, pconfig.OptionsTypeSimple, prompter, "")
 }

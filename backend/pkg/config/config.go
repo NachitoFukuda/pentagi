@@ -22,7 +22,9 @@ type Config struct {
 	// === Core System Configuration ===
 	Debug   bool   `env:"DEBUG" envDefault:"false"`
 	DataDir string `env:"DATA_DIR" envDefault:"./data"`
-	AskUser bool   `env:"ASK_USER" envDefault:"false"`
+	AskUser bool   `env:"ASK_USER" envDefault:"true"`
+	// Private deployments must explicitly opt in before exporting diagnostics.
+	ExternalReportingEnabled bool `env:"EXTERNAL_REPORTING_ENABLED" envDefault:"false"`
 
 	// TenantID namespaces every externally-visible artifact this instance creates
 	// (PostgreSQL schema, docker object names, Graphiti group ids, telemetry identity)
@@ -90,7 +92,8 @@ type Config struct {
 	TrustedProxies []string `env:"TRUSTED_PROXIES" envSeparator:","`
 
 	// === Authentication & Session Security ===
-	CookieSigningSalt string `env:"COOKIE_SIGNING_SALT"`
+	CookieSigningSalt      string `env:"COOKIE_SIGNING_SALT"`
+	BootstrapAdminPassword string `env:"BOOTSTRAP_ADMIN_PASSWORD"`
 
 	// === Web Scraper Service Endpoints ===
 	ScraperPublicURL  string `env:"SCRAPER_PUBLIC_URL"`
@@ -119,7 +122,7 @@ type Config struct {
 	EmbeddingModel         string `env:"EMBEDDING_MODEL"`
 	EmbeddingStripNewLines bool   `env:"EMBEDDING_STRIP_NEW_LINES" envDefault:"true"`
 	EmbeddingBatchSize     int    `env:"EMBEDDING_BATCH_SIZE" envDefault:"512"`
-	EmbeddingProvider      string `env:"EMBEDDING_PROVIDER" envDefault:"openai"`
+	EmbeddingProvider      string `env:"EMBEDDING_PROVIDER" envDefault:"none"`
 	EmbeddingMaxTextBytes  int    `env:"EMBEDDING_MAX_TEXT_BYTES" envDefault:"8192"`
 
 	// === Chain Summarization Engine ===
@@ -133,6 +136,7 @@ type Config struct {
 	SummarizerKeepQASections int  `env:"SUMMARIZER_KEEP_QA_SECTIONS" envDefault:"1"`
 
 	// === LLM Provider: Custom/Self-Hosted ===
+	CodexCLIEnabled            bool   `env:"CODEX_CLI_ENABLED" envDefault:"false"`
 	LLMServerURL               string `env:"LLM_SERVER_URL"`
 	LLMServerKey               string `env:"LLM_SERVER_KEY"`
 	LLMServerModel             string `env:"LLM_SERVER_MODEL"`
@@ -201,7 +205,7 @@ type Config struct {
 	XAIProvider  string `env:"XAI_PROVIDER"`
 
 	// === Search Engine: DuckDuckGo ===
-	DuckDuckGoEnabled    bool   `env:"DUCKDUCKGO_ENABLED" envDefault:"true"`
+	DuckDuckGoEnabled    bool   `env:"DUCKDUCKGO_ENABLED" envDefault:"false"`
 	DuckDuckGoRegion     string `env:"DUCKDUCKGO_REGION"`
 	DuckDuckGoSafeSearch string `env:"DUCKDUCKGO_SAFESEARCH"`
 	DuckDuckGoTimeRange  string `env:"DUCKDUCKGO_TIME_RANGE"`
@@ -276,7 +280,7 @@ type Config struct {
 	// UpdateStrategy is the strategy to use for updates. It can be "preview", "stable" or "nightly".
 	UpdateStrategy string `env:"UPDATE_STRATEGY" envDefault:"preview"`
 	// UpdateCheckInterval is how often this server reports its own state. Zero disables it.
-	UpdateCheckInterval time.Duration `env:"UPDATE_CHECK_INTERVAL" envDefault:"3h"`
+	UpdateCheckInterval time.Duration `env:"UPDATE_CHECK_INTERVAL" envDefault:"0"`
 	// UpdateServerHost is the endpoint as host[:port]; empty means the default.
 	UpdateServerHost string `env:"UPDATE_SERVER_HOST" envDefault:"update.pentagi.com"`
 	// SupportServerHost is the endpoint as host[:port]; empty means the default.
@@ -499,6 +503,7 @@ func (c *Config) GetSecretPatterns() []patterns.Pattern {
 		{c.DatabaseURL, "Database URL"},
 		{c.LicenseKey, "License Key"},
 		{c.CookieSigningSalt, "Cookie Salt"},
+		{c.BootstrapAdminPassword, "Bootstrap Admin Password"},
 		{c.OpenAIKey, "OpenAI Key"},
 		{c.AnthropicAPIKey, "Anthropic Key"},
 		{c.AnthropicIdentityToken, "Anthropic Identity Token"},

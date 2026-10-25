@@ -211,6 +211,13 @@ function Markdown({ children, className, searchValue }: MarkdownProps) {
     const customComponents = useMemo(() => {
         const components: Components = {};
 
+        // Model/tool output is untrusted. Even a plain <img> can send data in its
+        // URL from the user's browser, outside the worker VM's egress policy.
+        // Do not mount a fetch-capable element, including for relative URLs.
+        components.img = ({ alt }) => (
+            <span className="text-muted-foreground">画像の自動取得を無効化{alt ? `：${alt}` : ''}</span>
+        );
+
         if (processedSearch) {
             textElements.forEach((element) => {
                 (components as Record<string, ReturnType<typeof createComponentRenderer>>)[element] =

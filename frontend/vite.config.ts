@@ -7,6 +7,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 import { generateCertificates } from './scripts/generate-ssl.ts';
 import { getGitHash } from './scripts/lib.ts';
+import { japaneseUi } from './scripts/japanese-ui.ts';
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const readme = readFileSync('README.md', 'utf8');
@@ -14,7 +15,7 @@ const readme = readFileSync('README.md', 'utf8');
 export default defineConfig(({ mode }) => {
     const viteEnv = loadEnv(mode, process.cwd(), '');
     const vitePort = viteEnv.VITE_PORT ? Number.parseInt(viteEnv.VITE_PORT, 10) : 8000;
-    const viteHost = viteEnv.VITE_HOST || '0.0.0.0';
+    const viteHost = viteEnv.VITE_HOST || '127.0.0.1';
     const useHttps = viteEnv.VITE_USE_HTTPS === 'true';
 
     const sslKeyPath = viteEnv.VITE_SSL_KEY_PATH || 'ssl/server.key';
@@ -123,6 +124,7 @@ export default defineConfig(({ mode }) => {
         },
         plugins: [
             tsconfigPaths(),
+            japaneseUi(viteEnv.VITE_UI_LANGUAGE !== 'en'),
             react(),
             createHtmlPlugin({
                 inject: {

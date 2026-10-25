@@ -236,7 +236,7 @@ function Flow() {
                                     <>
                                         <FlowStatusIcon
                                             status={flow.status}
-                                            tooltip={formatName(flow.status)}
+                                            tooltip={formatName(flow.status, true)}
                                         />
 
                                         <ProviderIcon

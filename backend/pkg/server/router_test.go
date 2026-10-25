@@ -39,6 +39,13 @@ func routerGetStatic(t *testing.T, engine *gin.Engine, path string) *httptest.Re
 func TestRouter_RegisterStaticFileServer_ServesTheSPAWithItsCachePolicy(t *testing.T) {
 	engine := routerStaticEngine(t)
 
+	t.Run("GUI documents reject cross-origin image loads", func(t *testing.T) {
+		for _, path := range []string{"/", "/templates", "/assets/app-abc123.js"} {
+			rec := routerGetStatic(t, engine, path)
+			assert.Equal(t, "img-src 'self' data: blob:", rec.Header().Get("Content-Security-Policy"))
+		}
+	})
+
 	t.Run("existing hashed asset is served immutable", func(t *testing.T) {
 		rec := routerGetStatic(t, engine, "/assets/app-abc123.js")
 

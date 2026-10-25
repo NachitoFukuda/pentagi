@@ -1,3 +1,5 @@
+//go:build !codexonly
+
 package ollama
 
 import (

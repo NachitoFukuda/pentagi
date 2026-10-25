@@ -1,5 +1,5 @@
 import { format, isValid } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+import { enUS, ja } from 'date-fns/locale';
 import { Lock, Mail, User } from 'lucide-react';
 import { useState } from 'react';
 
@@ -37,7 +37,12 @@ function SettingsAccount() {
     const displayName = user.name?.trim() || user.mail;
     const initial = ([...(displayName || '?')][0] ?? '?').toUpperCase();
     const createdAt = user.created_at ? new Date(user.created_at) : null;
-    const memberSince = createdAt && isValid(createdAt) ? format(createdAt, 'MMMM yyyy', { locale: enUS }) : null;
+    const memberSince =
+        createdAt && isValid(createdAt)
+            ? format(createdAt, import.meta.env.VITE_UI_LANGUAGE === 'en' ? 'MMMM yyyy' : 'yyyy年M月', {
+                  locale: import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja,
+              })
+            : null;
     const accountLabel = isLocal ? 'Local account' : (formatAccountProvider(user.provider) ?? 'OAuth account');
 
     return (

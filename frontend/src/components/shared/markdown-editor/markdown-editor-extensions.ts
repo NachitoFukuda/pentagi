@@ -1003,6 +1003,33 @@ export const createMarkdownExtensions = (placeholder?: string) => [
         nested: true,
     }),
     Image.extend({
+        addNodeView() {
+            return ({ node }) => {
+                // Keep the original URL in the document for lossless editing,
+                // but never attach it to an img/src in the live editor DOM.
+                const dom = document.createElement('span');
+                const updateLabel = (image: ProseMirrorNode) => {
+                    dom.textContent = `画像の自動取得を無効化${image.attrs.alt ? `：${String(image.attrs.alt)}` : ''}`;
+                };
+
+                dom.className = 'text-muted-foreground';
+                dom.contentEditable = 'false';
+                updateLabel(node);
+
+                return {
+                    dom,
+                    update(next) {
+                        if (next.type !== node.type) {
+                            return false;
+                        }
+
+                        updateLabel(next);
+
+                        return true;
+                    },
+                };
+            };
+        },
         renderMarkdown(node: JSONContent) {
             const { alt = '', link, src = '', title = '' } = node.attrs ?? {};
             const label = escapeBracketsInLabel(String(alt));

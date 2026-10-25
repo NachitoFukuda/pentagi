@@ -211,7 +211,7 @@ function DataTableEmptyState({ entityName, filterValue }: DataTableEmptyStatePro
                 <EmptyTitle>{hasFilter ? 'No matches' : `No ${entityName} yet`}</EmptyTitle>
                 {hasFilter ? (
                     <EmptyDescription>
-                        No {entityName} match <code>{filterValue}</code>. Try a different query.
+                        {`No ${entityName} match "${filterValue}". Try a different query.`}
                     </EmptyDescription>
                 ) : null}
             </EmptyHeader>

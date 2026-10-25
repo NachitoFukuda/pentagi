@@ -1,0 +1,8 @@
+# Build context contains only the locally compiled binary and frontend assets.
+FROM debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
+RUN mkdir -p /opt/pentagi/data /opt/pentagi/fe /opt/pentagi/conf && chown -R 10001:10001 /opt/pentagi
+COPY --chown=10001:10001 pentagi /opt/pentagi/pentagi
+COPY --chown=10001:10001 fe/ /opt/pentagi/fe/
+WORKDIR /opt/pentagi
+USER 10001:10001
+ENTRYPOINT ["/opt/pentagi/pentagi"]

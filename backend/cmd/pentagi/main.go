@@ -194,6 +194,9 @@ func main() {
 	}
 
 	logrus.Info("Database schema updated successfully")
+	if err := bootstrapAdmin(ctx, db, cfg.BootstrapAdminPassword); err != nil {
+		logrus.WithError(err).Fatal("Secure administrator bootstrap failed")
+	}
 
 	// Keep the update service informed about this installation, periodically.
 	// After the migrations, deliberately: on a first boot the tables it reads do

@@ -1,5 +1,7 @@
 # PentAGI
 
+> This fork includes a private-by-default Codex CLI integration for macOS ARM64. See [setup and isolation](integrations/codex/README.md). Upstream installers/images are not the tested deployment path.
+
 <div align="center" style="font-size: 1.5em; margin: 20px 0;">
     <strong>P</strong>enetration testing <strong>A</strong>rtificial <strong>G</strong>eneral <strong>I</strong>ntelligence
 </div>

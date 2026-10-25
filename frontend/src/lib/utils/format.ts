@@ -1,5 +1,5 @@
 import { format, isThisYear, isToday } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+import { enUS, ja } from 'date-fns/locale';
 
 const PROVIDER_LABELS: Record<string, string> = {
     github: 'GitHub',
@@ -9,11 +9,40 @@ const PROVIDER_LABELS: Record<string, string> = {
 export const formatAccountProvider = (provider?: string): null | string =>
     provider ? (PROVIDER_LABELS[provider] ?? provider) : null;
 
-export const formatName = (name?: string): string =>
-    (name || '')
+const DISPLAY_LABELS: Record<string, string> = {
+    created: '作成済み',
+    running: '実行中',
+    waiting: '待機中',
+    finished: '完了',
+    failed: '失敗',
+    pending: '未実行',
+    stopped: '停止済み',
+    cancelled: '中止',
+    assistant: 'アシスタント',
+    primary_agent: 'メインエージェント',
+    pentester: '診断担当',
+    adviser: 'アドバイザー',
+    coder: 'コード担当',
+    enricher: '情報補完',
+    generator: '計画作成',
+    installer: 'インストール担当',
+    memorist: '記憶担当',
+    refiner: '改善担当',
+    reflector: '振り返り担当',
+    reporter: 'レポート担当',
+    searcher: '検索担当',
+    summarizer: '要約担当',
+    tool_call_fixer: 'ツール呼び出し修正',
+};
+
+export const formatName = (name?: string, localize = false): string => {
+    if (localize && name && import.meta.env.VITE_UI_LANGUAGE !== 'en' && DISPLAY_LABELS[name])
+        return DISPLAY_LABELS[name];
+    return (name || '')
         .split('_')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
+};
 
 export const formatDate = (date: Date) => {
     if (isToday(date)) {
@@ -21,14 +50,22 @@ export const formatDate = (date: Date) => {
     }
 
     if (isThisYear(date)) {
-        return format(date, 'HH:mm, d MMM', { locale: enUS });
+        return format(date, import.meta.env.VITE_UI_LANGUAGE === 'en' ? 'HH:mm, d MMM' : 'M月d日 HH:mm', {
+            locale: import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja,
+        });
     }
 
-    return format(date, 'HH:mm, d MMM yyyy', { locale: enUS });
+    return format(date, import.meta.env.VITE_UI_LANGUAGE === 'en' ? 'HH:mm, d MMM yyyy' : 'yyyy年M月d日 HH:mm', {
+        locale: import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja,
+    });
 };
 
 export const formatTableDate = (date: Date) =>
-    isThisYear(date) ? formatDate(date) : format(date, 'd MMM yyyy', { locale: enUS });
+    isThisYear(date)
+        ? formatDate(date)
+        : format(date, import.meta.env.VITE_UI_LANGUAGE === 'en' ? 'd MMM yyyy' : 'yyyy年M月d日', {
+              locale: import.meta.env.VITE_UI_LANGUAGE === 'en' ? enUS : ja,
+          });
 
 export const formatNumber = (value: number): string => new Intl.NumberFormat('en-US').format(value);
 

@@ -59,7 +59,7 @@ function FlowAgentIcon({ className, type, tooltip = type }: FlowAgentIconProps) 
     return (
         <Tooltip>
             <TooltipTrigger asChild>{iconElement}</TooltipTrigger>
-            <TooltipContent>{formatName(tooltip)}</TooltipContent>
+            <TooltipContent>{formatName(tooltip, true)}</TooltipContent>
         </Tooltip>
     );
 }

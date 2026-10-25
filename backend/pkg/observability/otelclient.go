@@ -96,6 +96,9 @@ func (c *telemetryClient) ForceFlush(ctx context.Context) error {
 }
 
 func NewTelemetryClient(ctx context.Context, cfg *config.Config) (TelemetryClient, error) {
+	if !cfg.ExternalReportingEnabled {
+		return nil, fmt.Errorf("external reporting is disabled: %w", ErrNotConfigured)
+	}
 	if cfg.TelemetryEndpoint == "" {
 		return nil, fmt.Errorf("telemetry endpoint is not set: %w", ErrNotConfigured)
 	}
