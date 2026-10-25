@@ -23,6 +23,13 @@ describe('Codex CLI provider identity', () => {
             }),
         ).toBe(true);
     });
+    it('recognizes an inherited model only with the exclusive CLI catalogue', () => {
+        const defaults = { custom: { agents: { simple: { model: '' } } } };
+        expect(hasCodexCliBackend({ default: defaults, models: { custom: [{ name: 'codex-local' }] } })).toBe(true);
+        expect(
+            hasCodexCliBackend({ default: defaults, models: { custom: [{ name: 'codex-local' }, { name: 'other' }] } }),
+        ).toBe(false);
+    });
     it('changes the display label while keeping the provider identifier intact', () => {
         const provider = { backend: 'codex-cli' as const, name: 'custom', type: ProviderType.Custom };
         expect(getProviderDisplayName(provider)).toBe('Codex CLI');

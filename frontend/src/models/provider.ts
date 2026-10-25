@@ -21,9 +21,14 @@ export const hasCodexCliBackend = (
         default?: { custom?: null | { agents: { simple: { model: string } } } };
         models?: { custom?: null | readonly { name: string }[] };
     },
-): boolean =>
-    settings?.default?.custom?.agents.simple.model === 'codex-local' &&
-    !!settings.models?.custom?.some((model) => model.name === 'codex-local');
+): boolean => {
+    const model = settings?.default?.custom?.agents.simple.model;
+    const catalogue = settings?.models?.custom ?? [];
+    if (!catalogue.some((item) => item.name === 'codex-local')) return false;
+    // Empty per-agent model means it inherits LLM_SERVER_MODEL. The CLI bridge
+    // exposes exactly one alias, so this inherited configuration is unambiguous.
+    return model === 'codex-local' || (model === '' && catalogue.every((item) => item.name === 'codex-local'));
+};
 
 export const isProviderValid = (provider: Provider, providers: Provider[]): boolean => {
     return providers.some((p) => p.name === provider.name && p.type === provider.type);
